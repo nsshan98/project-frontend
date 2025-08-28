@@ -31,14 +31,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const user = await response.json()
           console.log(user)
 
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            accessToken: user.accessToken,
-            refreshToken: user.refreshToken,
-            accessTokenExpires: user.accessTokenExpires,
-          }
+return {
+  id: user.userId,
+  email: user.email,
+  name: user.name,
+  accessToken: user.accessToken,
+  refreshToken: user.refreshToken,
+  accessTokenExpires: Date.now() + 60 * 60 * 1000, // <— add this
+}
         } catch (error) {
           console.error("Auth error:", error)
           return null
@@ -101,12 +101,13 @@ async function refreshAccessToken(token: JWT) {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        refreshToken: token.refreshToken,
-      }),
+     body: JSON.stringify({
+  refresh_token: token.refreshToken,
+}),
     })
 
     const refreshedTokens = await response.json()
+    console.log(refreshedTokens, 'refreshedTokens')
 
     if (!response.ok) {
       throw refreshedTokens
