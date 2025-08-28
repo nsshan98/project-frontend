@@ -1,31 +1,34 @@
-import { auth } from "@/lib/auth"
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
+import { auth } from "./auth";
 
 export default auth((req) => {
-  const { nextUrl } = req
-  const isLoggedIn = !!req.auth
+  const path = req.nextUrl.pathname;
 
-  const isAuthPage = nextUrl.pathname.startsWith("/auth")
-  const isProtectedRoute = nextUrl.pathname.startsWith("/dashboard") || nextUrl.pathname.startsWith("/profile")
+  // Public Routes
+  const publicRoutes = ["/auth/login"];
 
-  // Redirect to login if accessing protected route without auth
-  if (isProtectedRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/auth/login", nextUrl))
+  const isAuthenticated = !!req.auth;
+
+  // Check if the path matches any public route
+  const isPublicRoute = publicRoutes.includes(path);
+
+  // Check if the path starts with `/profile` (handles `/profile` and `/profile/[name]`)
+  const isProfileRoute = path.startsWith("/profile");
+
+  // Redirect unauthenticated users away from protected routes
+  if (isProfileRoute && !isAuthenticated) {
+    return NextResponse.redirect(new URL("/auth/login", req.url));
   }
 
-  // Redirect to dashboard if accessing auth pages while logged in
-  if (isAuthPage && isLoggedIn) {
-    return NextResponse.redirect(new URL("/dashboard", nextUrl))
+  // Redirect authenticated users from public routes
+  if (isPublicRoute && isAuthenticated) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // Handle token refresh errors
-  if (req.auth?.error === "RefreshAccessTokenError") {
-    return NextResponse.redirect(new URL("/auth/login", nextUrl))
-  }
+  return NextResponse.next();
+});
 
-  return NextResponse.next()
-})
-
+// Matcher configuration
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-}
+};
