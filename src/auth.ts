@@ -14,7 +14,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     console.log("Current Refresh Token:", token.refreshToken);
 
     const { data: newTokens } = await axios.post(
-      `${process.env.API_SERVER_BASE_URL}/refresh-token/`,
+      `${process.env.API_SERVER_BASE_URL}/auth/refresh-token/`,
       { refresh: token.refreshToken } // Pass refresh token in the body
     );
 
@@ -26,17 +26,17 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       refreshToken: newTokens.refresh || token.refreshToken, // Use fallback if not provided
     };
   } catch (error) {
-    // console.error(
-    //   "Error during token refresh:",
-    //   error?.response?.data || error
-    // );
-    toast.error("Something went wrong");
+    console.error(
+      "Error during token refresh:",
+      // error?.response?.data || error
+    );
+    // toast("Something went wrong");
     if (
       axios.isAxiosError(error) &&
       error.response?.data?.code === "token_not_valid"
     ) {
-      // console.error("Refresh token is invalid or expired.");
-      toast.error("Something went wrong");
+      console.error("Refresh token is invalid or expired.");
+      // toast("Something went wrong");
     }
 
     return {
@@ -61,7 +61,7 @@ export const {
       },
       async authorize(credentials): Promise<User | null> {
         try {
-          const url: string = `${process.env.API_SERVER_BASE_URL}/user-login/`;
+          const url: string = `${process.env.API_SERVER_BASE_URL}/auth/login/`;
           const payload = {
             email: credentials?.email,
             password: credentials?.password,
@@ -70,14 +70,14 @@ export const {
 
           const res = await axios.post(url, payload);
 
-          // console.log(res, "Res");
+          console.log(res.data.data, "Res");
           //   const userInfo = res.data?.user_info;
 
           return {
+            ...res.data?.user_info,
             accessToken: res.data?.access_token,
             refreshToken: res.data?.refresh_token,
-            ...res.data?.user_info,
-            subscriptionInfo: res.data?.subscription_info,
+            // subscriptionInfo: res.data?.subscription_info,
           };
         } catch (error) {
           //   console.log("Error from server ------->", error);
