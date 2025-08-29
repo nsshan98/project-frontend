@@ -10,6 +10,8 @@ export default auth((req) => {
   const isAuthenticated = !!req.auth;
   const isPublicRoute = publicRoutes.includes(path);
 
+  console.log(isAuthenticated, 'isAuthenticated')
+
   // Redirect unauthenticated users ONLY if not on a public route
   if (!isAuthenticated && !isPublicRoute) {
     return NextResponse.redirect(new URL("/auth/login", req.url));

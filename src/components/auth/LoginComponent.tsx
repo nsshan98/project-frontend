@@ -40,7 +40,7 @@ const LoginComponent = () => {
 
       const response = await doUserSignIn(formData);
       if (!response?.error) {
-        router.push("/");
+        router.push("/dashboard");
         toast("Login Successful");
       }
     } catch (error) {

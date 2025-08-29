@@ -8,26 +8,47 @@ import { jwtDecode } from "jwt-decode";
 import { toast } from "sonner";
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
+  // console.log(token, 'token')
   console.log("Refreshing access token...");
 
   try {
     console.log("Current Refresh Token:", token.refreshToken);
 
+
+
+    // Make the API call to refresh the token to the backend in the body
+    // const { data: newTokens } = await axios.post(
+    //   `${process.env.API_SERVER_BASE_URL}/auth/refresh-token/`,
+    //   {}, // no body needed
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${token.refreshToken}`,
+    //     },
+    //   }
+    // );
+
+    // Make the API call to refresh the token to the backend in the header
     const { data: newTokens } = await axios.post(
       `${process.env.API_SERVER_BASE_URL}/auth/refresh-token/`,
-      { refresh: token.refreshToken } // Pass refresh token in the body
+      {}, // no body needed
+      {
+        headers: {
+          Authorization: `Bearer ${token.refreshToken}`,
+        },
+      }
     );
 
     console.log("New Tokens:", newTokens);
 
     return {
       ...token,
-      accessToken: newTokens.access, // Adjust if backend uses different keys
-      refreshToken: newTokens.refresh || token.refreshToken, // Use fallback if not provided
+      accessToken: newTokens.accessToken, // Adjust if backend uses different keys
+      refreshToken: newTokens.refreshToken || token.refreshToken, // Use fallback if not provided
     };
   } catch (error) {
     console.error(
       "Error during token refresh:",
+      // error
       // error?.response?.data || error
     );
     // toast("Something went wrong");
@@ -70,13 +91,14 @@ export const {
 
           const res = await axios.post(url, payload);
 
-          console.log(res.data.data, "Res");
-          //   const userInfo = res.data?.user_info;
+          // console.log(res.data.data, "Res");
+          const userInfo = res.data;
+          console.log(userInfo);
 
           return {
-            ...res.data?.user_info,
-            accessToken: res.data?.access_token,
-            refreshToken: res.data?.refresh_token,
+            ...res.data,
+            accessToken: res.data?.accessToken,
+            refreshToken: res.data?.refreshToken,
             // subscriptionInfo: res.data?.subscription_info,
           };
         } catch (error) {
@@ -132,6 +154,7 @@ export const {
       return refreshAccessToken(token);
     },
     session: async ({ session, token }) => {
+      
       // console.log(`In session callback - Token is ${JSON.stringify(token)}`);
       // console.log("token from callback ------->", token);
       if (token) {
