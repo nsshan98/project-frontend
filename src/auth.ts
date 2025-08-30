@@ -19,17 +19,12 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     // Make the API call to refresh the token to the backend in the body
     // const { data: newTokens } = await axios.post(
     //   `${process.env.API_SERVER_BASE_URL}/auth/refresh-token/`,
-    //   {}, // no body needed
-    //   {
-    //     headers: {
-    //       Authorization: `Bearer ${token.refreshToken}`,
-    //     },
-    //   }
+    //   { refresh: token.refreshToken } // Pass refresh token in the body
     // );
 
     // Make the API call to refresh the token to the backend in the header
     const { data: newTokens } = await axios.post(
-      `${process.env.API_SERVER_BASE_URL}/auth/refresh-token/`,
+      `${process.env.API_SERVER_BASE_URL}/auth/refresh-token`,
       {}, // no body needed
       {
         headers: {
@@ -46,25 +41,12 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       refreshToken: newTokens.refreshToken || token.refreshToken, // Use fallback if not provided
     };
   } catch (error) {
-    console.error(
-      "Error during token refresh:",
-      // error
-      // error?.response?.data || error
-    );
-    // toast("Something went wrong");
-    if (
-      axios.isAxiosError(error) &&
-      error.response?.data?.code === "token_not_valid"
-    ) {
-      console.error("Refresh token is invalid or expired.");
-      // toast("Something went wrong");
-    }
-
-    return {
-      ...token,
-      error: "RefreshAccessTokenError",
-    };
+  if (axios.isAxiosError(error)) {
+    console.error("Error response:", error.response?.data);
+    console.error("Status:", error.response?.status);
   }
+  return { ...token, error: "RefreshAccessTokenError" };
+}
 }
 
 export const {
