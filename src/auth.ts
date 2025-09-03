@@ -5,48 +5,72 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
 import { JWT } from "next-auth/jwt";
 import { jwtDecode } from "jwt-decode";
-import { toast } from "sonner";
+
+// async function refreshAccessToken(token: JWT): Promise<JWT> {
+//   // console.log(token, 'token')
+//   console.log("Refreshing access token...");
+
+//   try {
+//     console.log("Current Refresh Token:", token.refreshToken);
+
+
+
+//     // Make the API call to refresh the token to the backend in the body
+//     // const { data: newTokens } = await axios.post(
+//     //   `${process.env.API_SERVER_BASE_URL}/auth/refresh-token/`,
+//     //   { refresh: token.refreshToken } // Pass refresh token in the body
+//     // );
+
+//     // Make the API call to refresh the token to the backend in the header
+//     const { data: newTokens } = await axios.post(
+//       `${process.env.API_SERVER_BASE_URL}/auth/refresh-token`,
+//       {}, // no body needed
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token.refreshToken}`,
+//         },
+//       }
+//     );
+
+//     console.log("New Tokens:", newTokens);
+
+//     return {
+//       ...token,
+//       accessToken: newTokens.accessToken, // Adjust if backend uses different keys
+//       refreshToken: newTokens.refreshToken, // Use fallback if not provided
+//       // refreshToken: newTokens.refreshToken || token.refreshToken, // Use fallback if not provided
+//     };
+//   } catch (error) {
+//   if (axios.isAxiosError(error)) {
+//     console.error("Error response:", error.response?.data);
+//     console.error("Status:", error.response?.status);
+//   }
+//   return { ...token, error: "RefreshAccessTokenError" };
+// }
+// }
+
+let refreshingToken: Promise<JWT> | null = null;
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
-  // console.log(token, 'token')
-  console.log("Refreshing access token...");
+  if (!refreshingToken) {
+    refreshingToken = (async () => {
+      try {
+        const { data: newTokens } = await axios.post(
+          `${process.env.API_SERVER_BASE_URL}/auth/refresh-token`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token.refreshToken}` },
+          }
+        );
 
-  try {
-    console.log("Current Refresh Token:", token.refreshToken);
-
-
-
-    // Make the API call to refresh the token to the backend in the body
-    // const { data: newTokens } = await axios.post(
-    //   `${process.env.API_SERVER_BASE_URL}/auth/refresh-token/`,
-    //   { refresh: token.refreshToken } // Pass refresh token in the body
-    // );
-
-    // Make the API call to refresh the token to the backend in the header
-    const { data: newTokens } = await axios.post(
-      `${process.env.API_SERVER_BASE_URL}/auth/refresh-token`,
-      {}, // no body needed
-      {
-        headers: {
-          Authorization: `Bearer ${token.refreshToken}`,
-        },
+        return { ...token, accessToken: newTokens.accessToken, refreshToken: newTokens.refreshToken };
+      } catch (error) {
+        console.log(error)
+        return { ...token, error: "RefreshAccessTokenError" as any };
       }
-    );
-
-    console.log("New Tokens:", newTokens);
-
-    return {
-      ...token,
-      accessToken: newTokens.accessToken, // Adjust if backend uses different keys
-      refreshToken: newTokens.refreshToken || token.refreshToken, // Use fallback if not provided
-    };
-  } catch (error) {
-  if (axios.isAxiosError(error)) {
-    console.error("Error response:", error.response?.data);
-    console.error("Status:", error.response?.status);
+    })().finally(() => { refreshingToken = null; });
   }
-  return { ...token, error: "RefreshAccessTokenError" };
-}
+  return refreshingToken;
 }
 
 export const {
